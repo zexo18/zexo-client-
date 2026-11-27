@@ -1,0 +1,23 @@
+// wrangler.jsonc: ZEXO, stage 2 (D1 + R2 connected)
+{
+  "name": "zexo",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zexo-db",
+      "database_id": "205b6508-1124-4d62-9698-966e51bd7251",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "zexo-files" }],
+  // Secrets (never put these in this file). Set with: npx wrangler secret put ADMIN_SETUP_TOKEN
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}
