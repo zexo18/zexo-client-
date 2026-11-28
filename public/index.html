@@ -99,12 +99,12 @@ const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch
 async function api(path,opt={}){const r=await fetch("/api"+path,{credentials:"same-origin",method:opt.method||"GET",headers:{"X-Requested-With":"zexo",...(opt.json?{"Content-Type":"application/json"}:{})},body:opt.json?JSON.stringify(opt.json):undefined});
  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Request failed ("+r.status+")");return d}
 const PAL=[["#4c9a2a","#7ccf4a"],["#2f6fb5","#58a6e8"],["#c93a52","#f07a5a"],["#d9902b","#f4cf5a"],["#7a4fc9","#b58af0"],["#1f9e8f","#5ee0c8"]];
-const D={packs:[],addons:[],skins:[],products:[],me:null,ov:null,state:"loading",error:""};
-const S={tab:"home",q:{home:"",catalog:""},f:{home:"All",catalog:"All",skin:"Popular"},sort:"Popular",pose:"stand",skin:store.get("skin",null)};
-const TABS=[["home","Home","▦"],["catalog","Catalog","▤"],["character","Character","☻"],["shop","Shop","◆"],["more","More","⋯"]];
+const D={packs:[],addons:[],mods:[],skins:[],products:[],me:null,ov:null,state:"loading",error:""};
+const S={tab:"home",q:{home:"",catalog:"",mods:""},f:{home:"All",catalog:"All",skin:"Popular"},sort:"Popular",pose:"stand",skin:store.get("skin",null)};
+const TABS=[["home","Home","▦"],["catalog","Catalog","▤"],["mods","Mods","⚒"],["character","Character","☻"],["shop","Shop","◆"],["more","More","⋯"]];
 const COPY={
  About:"ZEXO is a free home for Minecraft Bedrock texture packs, add-ons and skins. ZEXO is not affiliated with Mojang or Microsoft.",
- Help:"Pick a tab at the bottom. Home has texture packs, Catalog has add-ons, Character has skins. Create an account to save items, keep your download history and use ZEXO Coins.",
+ Help:"Pick a tab at the bottom. Home has texture packs, Catalog has add-ons, Mods has Minecraft Bedrock mods. Open an item to download it. Create an account to save items and keep your download history.",
  Contact:"For support, reply to the email address shown on the ZEXO page where you found this site. A contact form is not set up yet.",
  Privacy:"Draft policy: ZEXO stores your email, name, download history and purchases to run the service. Your selected skin stays on this device. Final text will be added before launch.",
  Terms:"Draft terms: content is provided as-is for personal use. Creators keep rights to their work. Final text will be added before launch."};
@@ -113,8 +113,8 @@ const COPY={
 async function loadMe(){try{D.me=(await api("/me")).user}catch{D.me=null}
  D.ov=null;if(D.me){try{D.ov=await api("/me/overview")}catch{}}}
 async function load(){D.state="loading";render();
- try{const [p,a,s,pr]=await Promise.all([api("/content?kind=texturepack"),api("/content?kind=addon"),api("/skins"),api("/products"),loadMe()]);
-  D.packs=p.items;D.addons=a.items;D.skins=s.items;D.products=pr.items;D.state="ok";
+ try{const [p,a,m,s,pr]=await Promise.all([api("/content?kind=texturepack"),api("/content?kind=addon"),api("/content?kind=mod"),api("/skins"),api("/products"),loadMe()]);
+  D.packs=p.items;D.addons=a.items;D.mods=m.items;D.skins=s.items;D.products=pr.items;D.state="ok";
   if(!D.skins.some(x=>x.id===S.skin))S.skin=D.skins[0]?.id??null}
  catch(e){D.state="error";D.error=e.message}render()}
 
@@ -126,7 +126,7 @@ const toast=m=>{const t=document.createElement("div");t.className="toast";t.setA
 const sheet=h=>{closeSheet();const s=document.createElement("div");s.className="sheet";s.innerHTML=`<div role="dialog" aria-modal="true">${h}</div>`;s.addEventListener("click",e=>{if(e.target===s)closeSheet()});$("#app").append(s);s.querySelector("button,input,a")?.focus()};
 const closeSheet=()=>document.querySelector(".sheet")?.remove();
 const chips=(list,cur,key)=>`<div class="chips">${list.map(c=>`<button class="chip ${c===cur?"on":""}" data-chip="${key}" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>`;
-const searchBar=k=>`<label class="bx search"><span aria-hidden="true">⌕</span><input id="q" data-k="${k}" placeholder="Search ${k==="home"?"texture packs":"add-ons"}" value="${esc(S.q[k])}" aria-label="Search"></label>`;
+const searchBar=k=>`<label class="bx search"><span aria-hidden="true">⌕</span><input id="q" data-k="${k}" placeholder="Search ${k==="home"?"texture packs":k==="mods"?"mods":"add-ons"}" value="${esc(S.q[k])}" aria-label="Search"></label>`;
 const status=empty=>D.state==="loading"?`<p class="empty">Loading…</p>`:D.state==="error"?`<div class="err">Couldn't load content: ${esc(D.error)}<br><button class="btn" style="margin-top:10px" data-retry>Try again</button></div>`:empty;
 
 /* ---------- views ---------- */
@@ -147,6 +147,11 @@ catalog(){
  const sorted=[...L].sort((a,b)=>S.sort==="Latest"?b.created_at.localeCompare(a.created_at):b.downloads-a.downloads);
  return `<h1>Catalog</h1>${searchBar("catalog")}${cats.length>1?chips(cats,f,"catalog"):""}${chips(["Popular","Latest"],S.sort,"sort")}
  ${L.length?`<div class="grid">${sorted.map(a=>card(a,[a.category,dl(a.downloads)+" downloads"].filter(Boolean).join(" · "))).join("")}</div>`:status(`<p class="empty">${all.length?"No add-ons match. Try another category.":"No add-ons published yet. Check back soon."}</p>`)}`},
+mods(){
+ const q=S.q.mods.toLowerCase(),all=D.mods;
+ const L=all.filter(x=>x.name.toLowerCase().includes(q)||String(x.description||"").toLowerCase().includes(q)||String(x.category||"").toLowerCase().includes(q));
+ const sorted=[...L].sort((a,b)=>b.downloads-a.downloads);
+ return `<h1>Mods</h1><p class="m" style="margin:-6px 0 12px">Minecraft Bedrock mods · .mcaddon, .mcpack, .mcworld and .zip</p>${searchBar("mods")}${L.length?`<div class="grid">${sorted.map(x=>card(x,[x.category,x.mc_version,dl(x.downloads)+" downloads"].filter(Boolean).join(" · "))).join("")}</div>`:status(`<p class="empty">${all.length?"No mods match your search.":"No mods published yet. Check back soon."}</p>`)}`},
 character(){
  if(!D.skins.length)return `<h1>Character</h1>${status(`<p class="empty">No skins available yet.</p>`)}`;
  const s=D.skins.find(x=>x.id===S.skin)||D.skins[0],f=S.f.skin;
@@ -183,12 +188,12 @@ function account(){
   ${D.me.role==="admin"?`<a class="btn gh" href="/admin/" style="margin-bottom:12px">Open admin dashboard</a>`:""}
   <h3 class="sec">Download history</h3>${o.downloads.length?`<div class="list">${o.downloads.slice(0,8).map(d=>`<button class="bx li" data-open="${d.id}"><b style="flex:1">${esc(d.name)}</b><span class="m">${esc(d.created_at.slice(0,10))}</span></button>`).join("")}</div>`:`<p class="m">No downloads yet.</p>`}
   <button class="btn gh w" style="margin-top:14px" data-logout>Sign out</button>`)}
-const detail=id=>{const i=[...D.packs,...D.addons].find(x=>x.id===+id);if(!i)return;const saved=!!D.ov?.saved?.some(x=>x.id===i.id);
+const detail=id=>{const i=[...D.packs,...D.addons,...D.mods].find(x=>x.id===+id);if(!i)return;const saved=!!D.ov?.saved?.some(x=>x.id===i.id);
  sheet(`${thumb(i)}<h2 style="margin:0 0 4px">${esc(i.name)}</h2><p class="m" style="margin-bottom:8px">${esc([i.resolution||i.category,i.version&&"v"+i.version,i.mc_version&&"Minecraft "+i.mc_version,i.creator&&"by "+i.creator].filter(Boolean).join(" · "))}</p>
  <p class="m" style="margin-bottom:8px">${dl(i.downloads)} downloads · ${(i.file_size/1048576).toFixed(1)} MB</p><p style="font-weight:600;margin-bottom:14px">${esc(i.description)}</p>
  <a class="btn w" href="/api/download/${i.id}" data-dl="${i.id}">Download</a><button class="btn gh w" style="margin-top:10px" data-save="${i.id}">${saved?"Remove from saved":"Save"}</button>`)};
 function savedSheet(){if(!D.me)return account();const L=D.ov?.saved||[];
- sheet(`<h2 style="margin-top:0">Saved</h2>${L.length?`<div class="list">${L.map(x=>`<button class="bx li" data-open="${x.id}"><b>${esc(x.name)}</b></button>`).join("")}</div>`:`<p class="empty">Nothing saved yet. Open a pack or add-on and tap Save.</p>`}<button class="btn gh w" style="margin-top:12px" data-close>Close</button>`)}
+ sheet(`<h2 style="margin-top:0">Saved</h2>${L.length?`<div class="list">${L.map(x=>`<button class="bx li" data-open="${x.id}"><b>${esc(x.name)}</b></button>`).join("")}</div>`:`<p class="empty">Nothing saved yet. Open a texture pack, add-on or mod and tap Save.</p>`}<button class="btn gh w" style="margin-top:12px" data-close>Close</button>`)}
 
 /* ---------- render + events ---------- */
 function render(){
@@ -216,7 +221,7 @@ document.addEventListener("click",async e=>{
   await api("/saved/"+D_.save,{method:on?"DELETE":"POST"});D.ov=await api("/me/overview");detail(D_.save);toast(on?"Removed from saved":"Saved")}
  else if(D_.close!==undefined)closeSheet();
  }catch(x){toast(x.message)}});
-const load2=async()=>{try{[D.packs,D.addons]=(await Promise.all([api("/content?kind=texturepack"),api("/content?kind=addon")])).map(r=>r.items);render()}catch{}};
+const load2=async()=>{try{[D.packs,D.addons,D.mods]=(await Promise.all([api("/content?kind=texturepack"),api("/content?kind=addon"),api("/content?kind=mod")])).map(r=>r.items);render()}catch{}};
 document.addEventListener("submit",async e=>{if(e.target.id!=="af")return;e.preventDefault();
  const b=Object.fromEntries(new FormData(e.target)),btn=e.target.querySelector(".btn");btn.disabled=true;
  try{await api(authMode==="register"?"/auth/register":"/auth/login",{method:"POST",json:b});await loadMe();closeSheet();render();toast(authMode==="register"?"Account created":"Signed in")}
