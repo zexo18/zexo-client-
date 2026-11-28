@@ -1,6 +1,6 @@
 // wrangler.jsonc: ZEXO, stage 2 (D1 + R2 connected)
 {
-  "name": "zexo",
+  "name": "zexo-client",
   "main": "src/index.ts",
   "compatibility_date": "2025-03-07",
   "compatibility_flags": ["nodejs_compat"],
@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "zexo-db",
-      "database_id": "205b6508-1124-4d62-9698-966e51bd7251",
+      "database_id": "59b3220b-370e-4118-8b6e-dd8de6a5ca4",
       "migrations_dir": "migrations"
     }
   ],
