@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16181a">
+<title>ZEXO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#16181a;--card:#202325;--card2:#292d30;--edge:#0c0d0e;--g:#5fd04a;--gd:#2f7d25;--t:#fff;--m:#9aa3a8;--red:#c93a52;--blue:#2f6fb5;--amber:#d9902b;
+--px:"Pixelify Sans","Courier New",monospace;--bd:"Nunito",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--t);font:800 15px/1.35 var(--bd)}
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
+main{flex:1;overflow-y:auto;padding:max(14px,env(safe-area-inset-top)) 14px 24px}
+h1,h2,h3,.px{font-family:var(--px);font-weight:700}
+h1{font-size:26px;margin:4px 0 12px}h2{font-size:20px;margin:18px 0 10px}
+.m{color:var(--m);font-weight:600;font-size:13px}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+:focus-visible{outline:3px solid #fff;outline-offset:2px}
+/* pixel bevel */
+.bx{background:var(--card);box-shadow:0 0 0 2px var(--edge),inset 0 -4px 0 rgba(0,0,0,.35);border-radius:6px}
+.btn{background:var(--g);color:#0c2a08;font-family:var(--px);font-size:16px;padding:11px 16px;border-radius:6px;box-shadow:0 0 0 2px var(--edge),inset 0 -5px 0 var(--gd),inset 0 3px 0 rgba(255,255,255,.35);transition:transform .08s}
+.btn:active{transform:translateY(2px)}
+.btn.gh{background:var(--card2);color:#fff;box-shadow:0 0 0 2px var(--edge),inset 0 -5px 0 rgba(0,0,0,.4),inset 0 3px 0 rgba(255,255,255,.08)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}.btn.w{width:100%}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:none}
+.chip{flex:none;padding:8px 14px;background:var(--card2);border-radius:6px;box-shadow:0 0 0 2px var(--edge);font-weight:800}
+.chip.on{background:var(--g);color:#0c2a08}
+.search{display:flex;gap:8px;align-items:center;padding:0 12px;margin-bottom:10px;height:46px}
+.search input{flex:1;background:none;border:0;color:#fff;font:700 15px var(--bd);outline:0;min-width:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{padding:8px;text-align:left;display:block;width:100%}
+.th{aspect-ratio:1;border-radius:4px;margin-bottom:8px;position:relative;overflow:hidden;image-rendering:pixelated}
+.th i{position:absolute;inset:0;background:
+ linear-gradient(90deg,rgba(0,0,0,.14) 50%,transparent 0) 0 0/16.66% 100%,linear-gradient(rgba(0,0,0,.14) 50%,transparent 0) 0 0/100% 16.66%}
+.th b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 38px var(--px);color:rgba(255,255,255,.9);text-shadow:0 3px 0 rgba(0,0,0,.35)}
+.card h3{font-size:15px}
+.row{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}.row .card{flex:none;width:150px}
+.hero{padding:0;overflow:hidden;width:100%;display:block;text-align:left}
+.hero .th{aspect-ratio:16/8;margin:0;border-radius:0}
+.hero .in{padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tag{display:inline-block;font:700 12px var(--px);padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.35)}
+nav{display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:#101213;border-top:2px solid var(--edge)}
+nav button{flex:1;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font:700 12px var(--px);color:var(--m);padding:6px 0;border-radius:6px}
+nav button .ic{width:26px;height:26px;display:grid;place-items:center;font-size:20px;border-radius:6px}
+nav button.on{color:#fff}
+nav button.on .ic{background:var(--g);box-shadow:0 0 0 2px var(--edge),inset 0 -4px 0 var(--gd);transform:translateY(-6px) scale(1.18)}
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;z-index:5;animation:fi .15s}
+.sheet>div{width:100%;max-height:88%;overflow-y:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#1b1e20;border-radius:12px 12px 0 0;border-top:2px solid var(--edge);animation:su .2s}
+@keyframes fi{from{opacity:0}}@keyframes su{from{transform:translateY(40px)}}
+.toast{position:absolute;left:14px;right:14px;bottom:84px;z-index:9;padding:12px;background:#000;border:2px solid var(--g);border-radius:6px;font-weight:800;animation:fi .15s}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{height:92px;padding:10px;text-align:left;color:#fff;border-radius:6px;box-shadow:0 0 0 2px var(--edge),inset 0 -6px 0 rgba(0,0,0,.3),inset 0 3px 0 rgba(255,255,255,.2);display:flex;flex-direction:column;justify-content:flex-end}
+.tile b{font:700 18px var(--px)}.tile span{font-size:12px;opacity:.85;font-weight:600}
+.list{display:flex;flex-direction:column;gap:8px}
+.li{display:flex;align-items:center;gap:12px;padding:12px;width:100%;text-align:left}
+.stage{height:300px;display:grid;place-items:center;margin-bottom:12px;perspective:600px}
+.pl{position:relative;width:96px;height:216px;transform-style:preserve-3d;transform:rotateY(-18deg)}
+.pl div{position:absolute;image-rendering:pixelated;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}
+.hd{left:24px;top:0;width:48px;height:48px;background:var(--sk)}.hd:before{content:"";position:absolute;left:0;top:0;width:100%;height:16px;background:var(--hr)}
+.hd:after{content:"";position:absolute;left:10px;top:24px;width:28px;height:6px;background:linear-gradient(90deg,#222 0 8px,transparent 8px 20px,#222 20px)}
+.bd{left:24px;top:48px;width:48px;height:72px;background:var(--sh)}
+.ar{top:48px;width:24px;height:72px;background:var(--sk);transform-origin:50% 6px}
+.ar.l{left:0}.ar.r{left:72px}
+.lg{top:120px;width:24px;height:96px;background:var(--pn);transform-origin:50% 0}
+.lg.l{left:24px}.lg.r{left:48px}
+.pl.walk .lg.l,.pl.walk .ar.r{animation:sw .7s infinite alternate ease-in-out}
+.pl.walk .lg.r,.pl.walk .ar.l{animation:sw .7s infinite alternate-reverse ease-in-out}
+.pl.wave .ar.r{animation:wv .5s infinite alternate ease-in-out;transform:rotate(150deg)}
+@keyframes sw{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+@keyframes wv{from{transform:rotate(130deg)}to{transform:rotate(175deg)}}
+.poses{display:flex;flex-direction:column;gap:8px;position:absolute;right:10px;top:10px}
+.poses .chip{font-family:var(--px);font-size:13px}
+.sk{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.sk .card{text-align:center;padding:6px}.sk .th{aspect-ratio:3/4;display:grid;place-items:center}
+.sk.sel .th{outline:3px solid var(--g)}
+.mini{width:30px;height:56px;position:relative;background:linear-gradient(var(--hr) 0 14%,var(--sk) 14% 30%,var(--sh) 30% 66%,var(--pn) 66%);box-shadow:0 0 0 2px rgba(0,0,0,.3)}
+.coin{display:grid;place-items:center;height:96px;font-size:44px}
+.empty{text-align:center;padding:30px 10px;color:var(--m);font-weight:600}
+label{display:block;margin:10px 0 4px;font-weight:800}
+input.f{width:100%;padding:12px;background:var(--card2);border:2px solid var(--edge);border-radius:6px;color:#fff;font:700 15px var(--bd)}
+.th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.err{padding:14px;margin:10px 0;border:2px solid var(--red);border-radius:6px}.sec{margin:14px 0 6px;color:var(--m)}form .f{margin-bottom:4px}a.btn{display:block;text-align:center;text-decoration:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><main id="v"></main>
+<nav id="nav"></nav></div>
+<script>
+"use strict";
+/* ZEXO user site: every list comes from the Cloudflare API (D1 + R2). */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+async function api(path,opt={}){const r=await fetch("/api"+path,{credentials:"same-origin",method:opt.method||"GET",headers:{"X-Requested-With":"zexo",...(opt.json?{"Content-Type":"application/json"}:{})},body:opt.json?JSON.stringify(opt.json):undefined});
+ const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Request failed ("+r.status+")");return d}
+const PAL=[["#4c9a2a","#7ccf4a"],["#2f6fb5","#58a6e8"],["#c93a52","#f07a5a"],["#d9902b","#f4cf5a"],["#7a4fc9","#b58af0"],["#1f9e8f","#5ee0c8"]];
+const D={packs:[],addons:[],skins:[],products:[],me:null,ov:null,state:"loading",error:""};
+const S={tab:"home",q:{home:"",catalog:""},f:{home:"All",catalog:"All",skin:"Popular"},sort:"Popular",pose:"stand",skin:store.get("skin",null)};
+const TABS=[["home","Home","▦"],["catalog","Catalog","▤"],["character","Character","☻"],["shop","Shop","◆"],["more","More","⋯"]];
+const COPY={
+ About:"ZEXO is a free home for Minecraft Bedrock texture packs, add-ons and skins. ZEXO is not affiliated with Mojang or Microsoft.",
+ Help:"Pick a tab at the bottom. Home has texture packs, Catalog has add-ons, Character has skins. Create an account to save items, keep your download history and use ZEXO Coins.",
+ Contact:"For support, reply to the email address shown on the ZEXO page where you found this site. A contact form is not set up yet.",
+ Privacy:"Draft policy: ZEXO stores your email, name, download history and purchases to run the service. Your selected skin stays on this device. Final text will be added before launch.",
+ Terms:"Draft terms: content is provided as-is for personal use. Creators keep rights to their work. Final text will be added before launch."};
+
+/* ---------- data ---------- */
+async function loadMe(){try{D.me=(await api("/me")).user}catch{D.me=null}
+ D.ov=null;if(D.me){try{D.ov=await api("/me/overview")}catch{}}}
+async function load(){D.state="loading";render();
+ try{const [p,a,s,pr]=await Promise.all([api("/content?kind=texturepack"),api("/content?kind=addon"),api("/skins"),api("/products"),loadMe()]);
+  D.packs=p.items;D.addons=a.items;D.skins=s.items;D.products=pr.items;D.state="ok";
+  if(!D.skins.some(x=>x.id===S.skin))S.skin=D.skins[0]?.id??null}
+ catch(e){D.state="error";D.error=e.message}render()}
+
+/* ---------- helpers ---------- */
+const thumb=i=>{const p=PAL[i.id%6];return `<div class="th" style="background:linear-gradient(135deg,${p[0]},${p[1]})"><i></i>${i.has_thumb?`<img src="/api/thumb/${i.id}" alt="" loading="lazy">`:`<b>${esc(i.name[0])}</b>`}</div>`};
+const card=(i,sub)=>`<button class="bx card" data-open="${i.id}">${thumb(i)}<h3>${esc(i.name)}</h3><div class="m">${esc(sub)}</div></button>`;
+const dl=n=>n>=1000?(n/1000).toFixed(n>=10000?0:1)+"K":String(n);
+const toast=m=>{const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=m;$("#app").append(t);setTimeout(()=>t.remove(),3000)};
+const sheet=h=>{closeSheet();const s=document.createElement("div");s.className="sheet";s.innerHTML=`<div role="dialog" aria-modal="true">${h}</div>`;s.addEventListener("click",e=>{if(e.target===s)closeSheet()});$("#app").append(s);s.querySelector("button,input,a")?.focus()};
+const closeSheet=()=>document.querySelector(".sheet")?.remove();
+const chips=(list,cur,key)=>`<div class="chips">${list.map(c=>`<button class="chip ${c===cur?"on":""}" data-chip="${key}" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>`;
+const searchBar=k=>`<label class="bx search"><span aria-hidden="true">⌕</span><input id="q" data-k="${k}" placeholder="Search ${k==="home"?"texture packs":"add-ons"}" value="${esc(S.q[k])}" aria-label="Search"></label>`;
+const status=empty=>D.state==="loading"?`<p class="empty">Loading…</p>`:D.state==="error"?`<div class="err">Couldn't load content: ${esc(D.error)}<br><button class="btn" style="margin-top:10px" data-retry>Try again</button></div>`:empty;
+
+/* ---------- views ---------- */
+const V={
+home(){
+ const q=S.q.home.toLowerCase(),f=S.f.home,all=D.packs;
+ const L=all.filter(p=>(f==="All"||p.resolution===f)&&p.name.toLowerCase().includes(q));
+ const feat=[...all].sort((a,b)=>b.downloads-a.downloads)[0],trend=[...L].sort((a,b)=>b.downloads-a.downloads);
+ const res=["All",...new Set(all.map(p=>p.resolution).filter(Boolean))];
+ const body=!L.length?status(`<p class="empty">${all.length?"No texture packs match. Clear the search or pick All.":"No texture packs published yet. Check back soon."}</p>`):
+ `${q||f!=="All"||!feat?"":`<button class="bx hero" data-open="${feat.id}">${thumb(feat).replace('class="th"','class="th"')}<div class="in"><div><span class="m">Featured</span><h3>${esc(feat.name)}</h3></div><span class="btn">View</span></div></button><h2>Trending</h2><div class="row">${trend.slice(0,6).map(p=>card(p,dl(p.downloads)+" downloads")).join("")}</div>`}
+ <h2>${q||f!=="All"?"Results":"Latest"}</h2><div class="grid">${L.map(p=>card(p,[p.resolution,p.mc_version].filter(Boolean).join(" · ")||"Texture pack")).join("")}</div>`;
+ return `<h1>Texture packs</h1>${searchBar("home")}${res.length>1?chips(res,f,"home"):""}${body}`},
+catalog(){
+ const q=S.q.catalog.toLowerCase(),f=S.f.catalog,all=D.addons;
+ const cats=["All",...new Set(all.map(a=>a.category).filter(Boolean))];
+ const L=all.filter(a=>(f==="All"||a.category===f)&&a.name.toLowerCase().includes(q));
+ const sorted=[...L].sort((a,b)=>S.sort==="Latest"?b.created_at.localeCompare(a.created_at):b.downloads-a.downloads);
+ return `<h1>Catalog</h1>${searchBar("catalog")}${cats.length>1?chips(cats,f,"catalog"):""}${chips(["Popular","Latest"],S.sort,"sort")}
+ ${L.length?`<div class="grid">${sorted.map(a=>card(a,[a.category,dl(a.downloads)+" downloads"].filter(Boolean).join(" · "))).join("")}</div>`:status(`<p class="empty">${all.length?"No add-ons match. Try another category.":"No add-ons published yet. Check back soon."}</p>`)}`},
+character(){
+ if(!D.skins.length)return `<h1>Character</h1>${status(`<p class="empty">No skins available yet.</p>`)}`;
+ const s=D.skins.find(x=>x.id===S.skin)||D.skins[0],f=S.f.skin;
+ const L=[...D.skins].sort((a,b)=>f==="New"?b.created_at.localeCompare(a.created_at)||b.id-a.id:f==="Popular"?b.popularity-a.popularity:f==="Mine"?(b.id===S.skin)-(a.id===S.skin):a.name.localeCompare(b.name));
+ const cv=x=>`--sk:${x.colors.sk};--hr:${x.colors.hr};--sh:${x.colors.sh};--pn:${x.colors.pn}`;
+ return `<h1>Character</h1><div class="bx stage" style="position:relative"><div class="pl ${S.pose}" style="${cv(s)}"><div class="lg l"></div><div class="lg r"></div><div class="bd"></div><div class="ar l"></div><div class="ar r"></div><div class="hd"></div></div>
+ <div class="poses">${[["stand","Standing"],["walk","Walking"],["wave","Waving"]].map(p=>`<button class="chip ${S.pose===p[0]?"on":""}" data-pose="${p[0]}">${p[1]}</button>`).join("")}</div></div>
+ <p class="m" style="margin-bottom:10px">Wearing: ${esc(s.name)}</p>${chips(["Mine","Popular","New","Random"],f,"skin")}
+ <div class="sk">${L.map(x=>`<button class="bx card ${x.id===S.skin?"sel":""}" data-skin="${x.id}" aria-pressed="${x.id===S.skin}"><div class="th" style="background:var(--card2)"><div class="mini" style="${cv(x)}"></div></div><h3 style="font-size:14px">${esc(x.name)}</h3></button>`).join("")}</div>`},
+shop(){
+ const packs=D.products.filter(p=>p.kind==="coin_pack"),dig=D.products.filter(p=>p.kind==="digital");
+ return `<h1>Shop</h1><div class="bx" style="padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div><div class="m">ZEXO Coins balance</div><h2 style="margin:0">${D.me?D.me.coins.toLocaleString():0}</h2></div>${D.me?"":`<button class="btn" data-go="account">Sign in</button>`}</div>
+ ${D.state!=="ok"?status(""):""}
+ ${dig.length?`<h2 style="margin-top:0">Digital products</h2><div class="list">${dig.map(p=>`<div class="bx li"><div style="flex:1"><h3>${esc(p.name)}</h3><div class="m">${esc(p.description)}</div></div><button class="btn" data-buy="${p.id}">${p.price_coins} ◆</button></div>`).join("")}</div>`:""}
+ <h2 ${dig.length?"":'style="margin-top:0"'}>Coin packs</h2>${packs.length?`<div class="grid">${packs.map(p=>`<div class="bx card"><div class="coin" aria-hidden="true">◆</div><button class="btn w" data-buy="${p.id}">+${p.coins_granted.toLocaleString()}</button><p class="m" style="text-align:center;margin-top:6px">$${(p.price_cents/100).toFixed(2)}</p></div>`).join("")}</div><p class="m" style="margin-top:10px">Card payments aren't connected yet, so coin packs can't be bought for now.</p>`:`<p class="empty">No coin packs available.</p>`}
+ <h2>Purchase history</h2>${D.me?(D.ov?.purchases?.length?`<div class="list">${D.ov.purchases.map(p=>`<div class="bx li"><div style="flex:1"><b>${esc(p.name)}</b><div class="m">${esc(p.created_at)}</div></div><span>${p.coins_delta} ◆</span></div>`).join("")}</div>`:`<p class="empty bx">No purchases yet.</p>`):`<p class="empty bx">Sign in to see your purchases.</p>`}`},
+more(){const T=[["Account",D.me?D.me.display_name:"Sign in or register",PAL[1][0],"account"],["Saved","Your saved content",PAL[3][0],"saved"],["Help","Support and FAQs",PAL[0][0],"Help"],["Contact","Get in touch",PAL[2][0],"Contact"],["Privacy","Privacy policy",PAL[4][0],"Privacy"],["Terms","Terms of service",PAL[5][0],"Terms"]];
+ return `<h1>More</h1><div class="tiles">${T.map(t=>`<button class="tile" style="background:${t[2]}" data-go="${t[3]}"><b>${t[0]}</b><span>${esc(t[1])}</span></button>`).join("")}</div>
+ <button class="bx li" style="margin-top:12px" data-go="About"><div><h3>About ZEXO</h3><div class="m">What ZEXO is</div></div></button>`}};
+
+/* ---------- sheets ---------- */
+const info=t=>sheet(`<h2 style="margin-top:0">${t}</h2><p style="font-weight:600;margin-bottom:16px">${COPY[t]}</p><button class="btn w" data-close>Close</button>`);
+let authMode="login";
+function account(){
+ if(!D.me){const reg=authMode==="register";
+  return sheet(`<h2 style="margin-top:0">${reg?"Create account":"Sign in"}</h2><form id="af">
+  ${reg?`<label for="n">Name</label><input id="n" name="name" class="f" maxlength="40" autocomplete="nickname">`:""}
+  <label for="e">Email</label><input id="e" name="email" type="email" class="f" required autocomplete="email">
+  <label for="p">Password${reg?" (10+ characters)":""}</label><input id="p" name="password" type="password" class="f" required minlength="${reg?10:1}" autocomplete="${reg?"new-password":"current-password"}">
+  <p id="ae" style="color:#ff7f90;margin-top:8px" role="alert"></p><button class="btn w" style="margin-top:10px">${reg?"Create account":"Sign in"}</button></form>
+  <button class="btn gh w" style="margin-top:10px" data-authmode="${reg?"login":"register"}">${reg?"I already have an account":"Create a new account"}</button>`)}
+ const o=D.ov||{downloads:[],purchases:[]};
+ sheet(`<h2 style="margin-top:0">${esc(D.me.display_name)}</h2><p class="m">${esc(D.me.email)}</p><p style="margin:10px 0"><b>${D.me.coins.toLocaleString()} ◆</b> ZEXO Coins</p>
+  ${D.me.role==="admin"?`<a class="btn gh" href="/admin/" style="margin-bottom:12px">Open admin dashboard</a>`:""}
+  <h3 class="sec">Download history</h3>${o.downloads.length?`<div class="list">${o.downloads.slice(0,8).map(d=>`<button class="bx li" data-open="${d.id}"><b style="flex:1">${esc(d.name)}</b><span class="m">${esc(d.created_at.slice(0,10))}</span></button>`).join("")}</div>`:`<p class="m">No downloads yet.</p>`}
+  <button class="btn gh w" style="margin-top:14px" data-logout>Sign out</button>`)}
+const detail=id=>{const i=[...D.packs,...D.addons].find(x=>x.id===+id);if(!i)return;const saved=!!D.ov?.saved?.some(x=>x.id===i.id);
+ sheet(`${thumb(i)}<h2 style="margin:0 0 4px">${esc(i.name)}</h2><p class="m" style="margin-bottom:8px">${esc([i.resolution||i.category,i.version&&"v"+i.version,i.mc_version&&"Minecraft "+i.mc_version,i.creator&&"by "+i.creator].filter(Boolean).join(" · "))}</p>
+ <p class="m" style="margin-bottom:8px">${dl(i.downloads)} downloads · ${(i.file_size/1048576).toFixed(1)} MB</p><p style="font-weight:600;margin-bottom:14px">${esc(i.description)}</p>
+ <a class="btn w" href="/api/download/${i.id}" data-dl="${i.id}">Download</a><button class="btn gh w" style="margin-top:10px" data-save="${i.id}">${saved?"Remove from saved":"Save"}</button>`)};
+function savedSheet(){if(!D.me)return account();const L=D.ov?.saved||[];
+ sheet(`<h2 style="margin-top:0">Saved</h2>${L.length?`<div class="list">${L.map(x=>`<button class="bx li" data-open="${x.id}"><b>${esc(x.name)}</b></button>`).join("")}</div>`:`<p class="empty">Nothing saved yet. Open a pack or add-on and tap Save.</p>`}<button class="btn gh w" style="margin-top:12px" data-close>Close</button>`)}
+
+/* ---------- render + events ---------- */
+function render(){
+ $("#nav").innerHTML=TABS.map(t=>`<button data-tab="${t[0]}" class="${S.tab===t[0]?"on":""}" aria-current="${S.tab===t[0]}"><span class="ic" aria-hidden="true">${t[2]}</span>${t[1]}</button>`).join("");
+ const keep=$("#q")&&document.activeElement===$("#q"),pos=keep?$("#q").selectionStart:0;
+ $("#v").innerHTML=V[S.tab]();
+ if(keep){const q=$("#q");q.focus();q.setSelectionRange(pos,pos)}}
+function go(t){S.tab=t;location.hash=t;closeSheet();render();$("#v").scrollTop=0}
+document.addEventListener("click",async e=>{
+ const d=e.target.closest("[data-tab],[data-open],[data-chip],[data-pose],[data-skin],[data-go],[data-buy],[data-save],[data-close],[data-retry],[data-authmode],[data-logout],[data-dl]");if(!d)return;const D_=d.dataset;
+ try{
+ if(D_.tab)go(D_.tab);
+ else if(D_.open)detail(D_.open);
+ else if(D_.retry!==undefined)load();
+ else if(D_.chip){if(D_.chip==="sort")S.sort=D_.v;else S.f[D_.chip]=D_.v;
+  if(D_.chip==="skin"&&D_.v==="Random"&&D.skins.length){S.skin=D.skins[Math.floor(Math.random()*D.skins.length)].id;store.set("skin",S.skin)}render()}
+ else if(D_.pose){S.pose=D_.pose;render()}
+ else if(D_.skin){S.skin=+D_.skin;store.set("skin",S.skin);render();toast("Skin selected: "+D.skins.find(s=>s.id===S.skin).name)}
+ else if(D_.go){["Help","Contact","Privacy","Terms","About"].includes(D_.go)?info(D_.go):D_.go==="saved"?savedSheet():account()}
+ else if(D_.authmode){authMode=D_.authmode;account()}
+ else if(D_.logout!==undefined){await api("/auth/logout",{method:"POST"});await loadMe();closeSheet();render();toast("Signed out")}
+ else if(D_.dl){setTimeout(async()=>{if(D.me){D.ov=await api("/me/overview").catch(()=>D.ov);}load2()},1500)}
+ else if(D_.buy){if(!D.me)return account();await api("/shop/buy",{method:"POST",json:{product_id:+D_.buy}});await loadMe();render();toast("Purchase complete")}
+ else if(D_.save){if(!D.me)return account();const on=D.ov?.saved?.some(x=>x.id===+D_.save);
+  await api("/saved/"+D_.save,{method:on?"DELETE":"POST"});D.ov=await api("/me/overview");detail(D_.save);toast(on?"Removed from saved":"Saved")}
+ else if(D_.close!==undefined)closeSheet();
+ }catch(x){toast(x.message)}});
+const load2=async()=>{try{[D.packs,D.addons]=(await Promise.all([api("/content?kind=texturepack"),api("/content?kind=addon")])).map(r=>r.items);render()}catch{}};
+document.addEventListener("submit",async e=>{if(e.target.id!=="af")return;e.preventDefault();
+ const b=Object.fromEntries(new FormData(e.target)),btn=e.target.querySelector(".btn");btn.disabled=true;
+ try{await api(authMode==="register"?"/auth/register":"/auth/login",{method:"POST",json:b});await loadMe();closeSheet();render();toast(authMode==="register"?"Account created":"Signed in")}
+ catch(x){$("#ae").textContent=x.message;btn.disabled=false}});
+document.addEventListener("input",e=>{if(e.target.id==="q"){S.q[e.target.dataset.k]=e.target.value;render()}});
+addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(TABS.some(x=>x[0]===t)&&t!==S.tab){S.tab=t;render()}});
+addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+const hh=location.hash.slice(1);if(TABS.some(x=>x[0]===hh))S.tab=hh;
+load();
+</script>
+</body>
+</html>

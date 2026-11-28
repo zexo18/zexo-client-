@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>ZEXO Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0f10;--p:#17191b;--p2:#202326;--edge:#050505;--g:#5fd04a;--gd:#2f7d25;--m:#98a2a8;--red:#e0546a;--px:"Pixelify Sans","Courier New",monospace}
+*{box-sizing:border-box;margin:0}body{background:var(--bg);color:#fff;font:700 14px/1.4 Nunito,system-ui,sans-serif;min-width:900px}
+h1,h2,h3,.px{font-family:var(--px)}button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0}:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.box{background:var(--p);border-radius:6px;box-shadow:0 0 0 2px var(--edge),inset 0 -4px 0 rgba(0,0,0,.35)}
+.btn{background:var(--g);color:#0c2a08;font-family:var(--px);font-size:15px;padding:9px 16px;border-radius:6px;box-shadow:0 0 0 2px var(--edge),inset 0 -4px 0 var(--gd)}
+.btn.gh{background:var(--p2);color:#fff;box-shadow:0 0 0 2px var(--edge),inset 0 -4px 0 rgba(0,0,0,.4)}.btn.dg{background:var(--red);color:#fff;box-shadow:0 0 0 2px var(--edge),inset 0 -4px 0 #8a2a3a}
+.btn.sm{font-size:13px;padding:5px 10px}.btn[disabled]{opacity:.5;cursor:not-allowed}
+#shell{display:grid;grid-template-columns:230px 1fr;height:100vh}
+aside{background:#0a0b0c;border-right:2px solid var(--edge);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+aside .logo{font:700 26px var(--px);color:var(--g);padding:0 8px 14px}
+aside button{background:none;text-align:left;padding:10px 12px;border-radius:6px;color:var(--m);font-weight:800}
+aside button.on{background:var(--g);color:#0c2a08}aside button:not(.on):hover{background:var(--p2);color:#fff}
+.top{display:flex;justify-content:space-between;align-items:center;padding:14px 26px;border-bottom:2px solid var(--edge);background:#0a0b0c}
+#main{overflow-y:auto;height:100vh}#pg{padding:24px 26px 60px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}.cards .box{padding:16px}.cards b{font:700 28px var(--px);display:block}
+table{width:100%;border-collapse:collapse}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #26292c}th{color:var(--m);font-size:13px}
+.pill{padding:2px 9px;border-radius:4px;font-size:12px;background:#333}.pill.pub{background:var(--gd)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px;margin-bottom:22px}.form .full{grid-column:1/3}
+label{display:block;color:var(--m);margin-bottom:4px;font-size:13px}
+.in{width:100%;padding:10px;background:var(--p2);border:2px solid var(--edge);border-radius:6px}
+.drop{border:3px dashed #3a3f43;border-radius:8px;padding:26px;text-align:center;color:var(--m)}.drop.over{border-color:var(--g);background:#13200f}
+.bar{height:12px;background:var(--p2);border-radius:6px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;width:0;background:var(--g);transition:width .1s}
+.msg{padding:10px 14px;border-radius:6px;margin-bottom:14px}.msg.ok{background:#16341a;border:2px solid var(--g)}.msg.er{background:#3a1820;border:2px solid var(--red)}
+#login{max-width:380px;margin:12vh auto;padding:26px}.row{display:flex;gap:8px;align-items:center}.thumb{width:140px;height:140px;object-fit:cover;border-radius:6px;background:var(--p2)}
+.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+</style></head><body><div id="root"></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),H={"X-Requested-With":"zexo"};
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const KIND={texturepack:"Texture Packs",addon:"Add-ons",mod:"Mods"};
+const EXT={texturepack:["mcpack","zip","mcaddon"],addon:["mcaddon","mcpack","zip"],mod:["mcaddon","mcpack","mcworld","zip"]};
+const MAXF=50*1024*1024,MAXT=2*1024*1024;
+let me=null,view="overview",editing=null,flash=null,pending={file:null,thumb:null};
+async function api(path,opt={}){const r=await fetch("/api"+path,{credentials:"same-origin",...opt,headers:{...H,...(opt.json?{"Content-Type":"application/json"}:{}),...opt.headers},body:opt.json?JSON.stringify(opt.json):opt.body});
+ const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Request failed ("+r.status+")");return d}
+const size=n=>n>1048576?(n/1048576).toFixed(1)+" MB":Math.ceil(n/1024)+" KB";
+const msg=()=>flash?`<div class="msg ${flash.t}" role="status">${esc(flash.m)}</div>`:"";
+const say=(t,m)=>{flash={t,m};};
+
+/* ---------- login / first-admin setup ---------- */
+function loginView(setup){$("#root").innerHTML=`<form id="login" class="box"><h1 style="margin-bottom:4px">ZEXO Admin</h1><p style="color:var(--m);margin-bottom:12px">${setup?"Create the first administrator.":"Administrator sign in."}</p>${msg()}
+ ${setup?`<label>Setup token</label><input class="in" name="token" type="password" required><label>Name</label><input class="in" name="name">`:""}
+ <label>Email</label><input class="in" name="email" type="email" required><label>Password (10+ characters)</label><input class="in" name="password" type="password" required minlength="10">
+ <button class="btn" style="width:100%;margin-top:16px">${setup?"Create admin":"Sign in"}</button>
+ <button type="button" class="btn gh sm" style="margin-top:12px" id="sw">${setup?"Back to sign in":"First-time setup"}</button></form>`;
+ $("#sw").onclick=()=>{flash=null;loginView(!setup)};
+ $("#login").onsubmit=async e=>{e.preventDefault();const b=Object.fromEntries(new FormData(e.target));
+  try{await api(setup?"/admin/bootstrap":"/auth/login",{method:"POST",json:b});flash=null;await boot()}catch(x){say("er",x.message);loginView(setup)}}}
+
+/* ---------- shell ---------- */
+const NAV=[["overview","Overview"],["texturepack","Texture Packs"],["addon","Add-ons"],["mod","Mod Upload"],["products","Products"],["coins","ZEXO Coins"],["users","Users"],["downloads","Downloads"]];
+function shell(){$("#root").innerHTML=`<div id="shell"><aside><div class="logo">ZEXO</div>${NAV.map(n=>`<button data-v="${n[0]}" class="${view===n[0]?"on":""}">${n[1]}</button>`).join("")}</aside>
+ <div id="main"><div class="top"><span>${esc(me.display_name)} (${esc(me.email)})</span><button class="btn gh sm" id="out">Sign out</button></div><div id="pg">Loading…</div></div></div>`;
+ document.querySelectorAll("aside button").forEach(b=>b.onclick=()=>{view=b.dataset.v;editing=null;flash=null;pending={file:null,thumb:null};shell()});
+ $("#out").onclick=async()=>{await api("/auth/logout",{method:"POST"});me=null;boot()};page()}
+async function page(){const pg=$("#pg");try{
+ if(view==="overview"){const s=await api("/admin/stats");pg.innerHTML=`<h1 style="margin-bottom:16px">Overview</h1><div class="cards">${[["Users",s.users],["Published",s.published],["Drafts",s.drafts],["Downloads",s.downloads],["Storage",size(s.storage)]].map(c=>`<div class="box"><span style="color:var(--m)">${c[0]}</span><b>${c[1]}</b></div>`).join("")}</div>`}
+ else if(KIND[view])await contentPage(view);
+ else if(view==="products")await productsPage();
+ else if(view==="coins")await coinsPage();
+ else if(view==="users"){const r=await api("/admin/users");pg.innerHTML=`<h1 style="margin-bottom:16px">Users</h1><div class="box"><table><tr><th>Email</th><th>Name</th><th>Role</th><th>Coins</th><th>Joined</th></tr>${r.items.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.display_name)}</td><td>${esc(u.role)}</td><td>${u.coins}</td><td>${esc(u.created_at)}</td></tr>`).join("")}</table></div>`}
+ else if(view==="downloads"){const r=await api("/admin/downloads");pg.innerHTML=`<h1 style="margin-bottom:16px">Downloads</h1><div class="box"><table><tr><th>When</th><th>Item</th><th>User</th></tr>${r.items.length?r.items.map(d=>`<tr><td>${esc(d.created_at)}</td><td>${esc(d.name)}</td><td>${esc(d.email||"Guest")}</td></tr>`).join(""):`<tr><td colspan="3" style="color:var(--m)">No downloads yet.</td></tr>`}</table></div>`}
+ }catch(x){pg.innerHTML=`<div class="msg er">${esc(x.message)}</div>`}}
+
+/* ---------- content list + upload form ---------- */
+async function contentPage(kind){const r=await api("/admin/content?kind="+kind),pg=$("#pg"),e=editing,up=kind==="mod";
+ pg.innerHTML=`<div class="tools"><h1>${up?"Mod Upload":KIND[kind]}</h1><button class="btn" id="new">${e?"Cancel edit":"Upload new"}</button></div>${msg()}<div id="fm"></div>
+ <div class="box"><table><tr><th></th><th>Name</th><th>Version</th><th>Size</th><th>Downloads</th><th>Status</th><th></th></tr>
+ ${r.items.length?r.items.map(i=>`<tr><td>${i.has_thumb?`<img src="/api/thumb/${i.id}" width="40" height="40" alt="" style="border-radius:4px">`:""}</td><td>${esc(i.name)}<div style="color:var(--m);font-size:12px">${esc(i.creator)}</div></td><td>${esc(i.version)}</td><td>${size(i.file_size)}</td><td>${i.downloads}</td>
+ <td><span class="pill ${i.status==="published"?"pub":""}">${i.status}</span></td><td class="row"><button class="btn gh sm" data-a="edit" data-id="${i.id}">Edit</button><button class="btn gh sm" data-a="tog" data-id="${i.id}" data-s="${i.status}">${i.status==="published"?"Unpublish":"Publish"}</button><button class="btn dg sm" data-a="del" data-id="${i.id}">Delete</button></td></tr>`).join(""):`<tr><td colspan="7" style="color:var(--m)">Nothing uploaded yet.</td></tr>`}</table></div>`;
+ flash=null;const items=r.items;
+ $("#new").onclick=()=>{editing=e?null:{}; pending={file:null,thumb:null};contentPage(kind)};
+ if(e)form(kind,e.id?items.find(i=>i.id===e.id):{});
+ pg.querySelectorAll("[data-a]").forEach(b=>b.onclick=async()=>{const id=+b.dataset.id,a=b.dataset.a;try{
+  if(a==="edit"){editing={id};pending={file:null,thumb:null};return contentPage(kind)}
+  if(a==="tog"){await api(`/admin/content/${id}/status`,{method:"POST",json:{status:b.dataset.s==="published"?"draft":"published"}});say("ok",b.dataset.s==="published"?"Unpublished.":"Published.")}
+  if(a==="del"){if(!confirm("Delete this item and its files permanently?"))return;await api("/admin/content/"+id,{method:"DELETE"});say("ok","Deleted.")}
+ }catch(x){say("er",x.message)}contentPage(kind)})}
+
+function form(kind,it){const ex=!!it.id;$("#fm").innerHTML=`<form class="box form" id="f"><h2 class="full">${ex?"Edit":"New"} ${KIND[kind].replace(/s$/,"")}</h2>
+ <div class="full"><div class="drop" id="dz"><p id="dzt">Drag a ${EXT[kind].map(e=>"."+e).join(", ")} file here (max 50 MB)${ex?" to replace the current file":""}</p><button type="button" class="btn gh sm" id="br" style="margin-top:10px">Browse files</button><input type="file" id="fi" hidden accept="${EXT[kind].map(e=>"."+e).join(",")}"></div><div class="bar" id="bar" hidden><i></i></div></div>
+ <div><label>Name *</label><input class="in" name="name" required maxlength="80" value="${esc(it.name)}"></div><div><label>Creator</label><input class="in" name="creator" maxlength="60" value="${esc(it.creator)}"></div>
+ <div><label>Category</label><input class="in" name="category" maxlength="40" value="${esc(it.category)}"></div><div><label>${kind==="texturepack"?"Resolution (16x, 32x, PBR)":"Version"}</label><input class="in" name="${kind==="texturepack"?"resolution":"version"}" maxlength="20" value="${esc(kind==="texturepack"?it.resolution:it.version)}"></div>
+ <div><label>Minecraft compatibility</label><input class="in" name="mc_version" maxlength="30" placeholder="1.21.x" value="${esc(it.mc_version)}"></div><div><label>Version</label>${kind==="texturepack"?`<input class="in" name="version" maxlength="20" value="${esc(it.version)}">`:`<input class="in" disabled value="Set on the left">`}</div>
+ <div class="full"><label>Description</label><textarea class="in" name="description" rows="4" maxlength="2000">${esc(it.description)}</textarea></div>
+ <div><label>Thumbnail (PNG, JPG, WebP, max 2 MB)</label><input type="file" id="ti" accept="image/png,image/jpeg,image/webp"></div><div><img class="thumb" id="tp" alt="Thumbnail preview" ${it.has_thumb?`src="/api/thumb/${it.id}"`:"hidden"}></div>
+ <div class="full row"><button class="btn gh" data-st="draft">Save draft</button><button class="btn" data-st="published">Save and publish</button><span id="fe" style="color:var(--red)"></span></div></form>`;
+ const fi=$("#fi"),dz=$("#dz"),err=t=>$("#fe").textContent=t;
+ const setFile=f=>{err("");if(!f)return;const x=f.name.split(".").pop().toLowerCase();
+  if(!EXT[kind].includes(x))return err("Unsupported type. Use "+EXT[kind].map(e=>"."+e).join(", ")+".");if(f.size>MAXF)return err("File is over 50 MB.");if(!f.size)return err("File is empty.");
+  pending.file=f;$("#dzt").textContent=f.name+" ("+size(f.size)+")"};
+ $("#br").onclick=()=>fi.click();fi.onchange=()=>setFile(fi.files[0]);
+ dz.ondragover=e=>{e.preventDefault();dz.classList.add("over")};dz.ondragleave=()=>dz.classList.remove("over");dz.ondrop=e=>{e.preventDefault();dz.classList.remove("over");setFile(e.dataTransfer.files[0])};
+ $("#ti").onchange=e=>{const f=e.target.files[0];err("");if(!f)return;if(f.size>MAXT||!/^image\/(png|jpeg|webp)$/.test(f.type)){e.target.value="";return err("Thumbnail must be PNG/JPG/WebP under 2 MB.")}
+  pending.thumb=f;$("#tp").src=URL.createObjectURL(f);$("#tp").hidden=false};
+ document.querySelectorAll("[data-st]").forEach(b=>b.onclick=e=>{e.preventDefault();const f=$("#f");if(!f.reportValidity())return;
+  if(!ex&&!pending.file)return err("Choose a package file first.");
+  const fd=new FormData(f);fd.set("kind",kind);fd.set("status",b.dataset.st);if(pending.file)fd.set("file",pending.file);if(pending.thumb)fd.set("thumbnail",pending.thumb);
+  const bar=$("#bar");bar.hidden=false;document.querySelectorAll("[data-st]").forEach(x=>x.disabled=true);
+  const x=new XMLHttpRequest();x.open(ex?"PUT":"POST","/api/admin/content"+(ex?"/"+it.id:""));x.setRequestHeader("X-Requested-With","zexo");
+  x.upload.onprogress=p=>{if(p.lengthComputable)bar.firstElementChild.style.width=(p.loaded/p.total*100)+"%"};
+  x.onload=()=>{let d={};try{d=JSON.parse(x.responseText)}catch{}if(x.status<300){say("ok",b.dataset.st==="published"?"Uploaded and published.":"Draft saved.");editing=null;pending={file:null,thumb:null};contentPage(kind)}
+   else{err(d.error||"Upload failed ("+x.status+").");document.querySelectorAll("[data-st]").forEach(y=>y.disabled=false);bar.hidden=true}};
+  x.onerror=()=>{err("Network error. Try again.");document.querySelectorAll("[data-st]").forEach(y=>y.disabled=false)};x.send(fd)})}
+
+
+/* ---------- products ---------- */
+async function productsPage(){const r=await api("/admin/products"),pg=$("#pg");
+ pg.innerHTML=`<h1 style="margin-bottom:16px">Products</h1>${msg()}<form class="box form" id="pf"><h2 class="full">New product</h2>
+ <div><label>Name *</label><input class="in" name="name" required maxlength="80"></div><div><label>Type</label><select class="in" name="kind"><option value="digital">Digital product (bought with coins)</option><option value="coin_pack">Coin pack (needs payments)</option></select></div>
+ <div class="full"><label>Description</label><input class="in" name="description" maxlength="500"></div>
+ <div><label>Price in coins (digital)</label><input class="in" name="price_coins" type="number" min="0" value="0"></div><div><label>Coins granted (coin pack)</label><input class="in" name="coins_granted" type="number" min="0" value="0"></div>
+ <div><label>Price in USD (coin pack)</label><input class="in" name="usd" type="number" min="0" step="0.01" value="0"></div><div class="row" style="align-items:end"><button class="btn">Add product</button></div></form>
+ <div class="box"><table><tr><th>Name</th><th>Type</th><th>Price</th><th>Status</th><th></th></tr>${r.items.length?r.items.map(p=>`<tr><td>${esc(p.name)}<div style="color:var(--m);font-size:12px">${esc(p.description)}</div></td><td>${p.kind==="coin_pack"?"Coin pack":"Digital"}</td>
+ <td>${p.kind==="coin_pack"?"+"+p.coins_granted+" coins · $"+(p.price_cents/100).toFixed(2):p.price_coins+" coins"}</td><td><span class="pill ${p.active?"pub":""}">${p.active?"active":"hidden"}</span></td>
+ <td class="row"><button class="btn gh sm" data-pa="tog" data-id="${p.id}">${p.active?"Hide":"Show"}</button><button class="btn dg sm" data-pa="del" data-id="${p.id}">Delete</button></td></tr>`).join(""):`<tr><td colspan="5" style="color:var(--m)">No products.</td></tr>`}</table></div>`;
+ flash=null;
+ $("#pf").onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
+  try{await api("/admin/products",{method:"POST",json:{kind:f.kind,name:f.name,description:f.description,price_coins:+f.price_coins,coins_granted:+f.coins_granted,price_cents:Math.round(+f.usd*100)}});say("ok","Product added.")}catch(x){say("er",x.message)}productsPage()};
+ pg.querySelectorAll("[data-pa]").forEach(b=>b.onclick=async()=>{const p=r.items.find(i=>i.id===+b.dataset.id);try{
+  if(b.dataset.pa==="tog"){await api("/admin/products/"+p.id,{method:"PUT",json:{...p,active:!p.active}});say("ok",p.active?"Hidden from the shop.":"Visible in the shop.")}
+  else{if(!confirm("Delete this product?"))return;await api("/admin/products/"+p.id,{method:"DELETE"});say("ok","Deleted.")}}catch(x){say("er",x.message)}productsPage()})}
+
+/* ---------- coins ---------- */
+async function coinsPage(){const r=await api("/admin/coins"),pg=$("#pg");
+ pg.innerHTML=`<h1 style="margin-bottom:16px">ZEXO Coins</h1>${msg()}<form class="box form" id="cf"><h2 class="full">Adjust a user's balance</h2>
+ <div><label>User email *</label><input class="in" name="email" type="email" required></div><div><label>Coins (negative to remove) *</label><input class="in" name="delta" type="number" required></div>
+ <div class="full"><label>Reason</label><input class="in" name="reason" maxlength="120"></div><div class="full"><button class="btn">Apply</button></div></form>
+ <div class="box"><table><tr><th>When</th><th>User</th><th>Change</th><th>Reason</th></tr>${r.items.length?r.items.map(l=>`<tr><td>${esc(l.created_at)}</td><td>${esc(l.email)}</td><td>${l.delta>0?"+":""}${l.delta}</td><td>${esc(l.reason)}</td></tr>`).join(""):`<tr><td colspan="4" style="color:var(--m)">No adjustments yet.</td></tr>`}</table></div>`;
+ flash=null;$("#cf").onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
+  try{const d=await api("/admin/coins",{method:"POST",json:{email:f.email,delta:+f.delta,reason:f.reason}});say("ok","Done. New balance: "+d.balance)}catch(x){say("er",x.message)}coinsPage()}}
+
+async function boot(){try{me=(await api("/me")).user}catch{me=null}
+ if(me&&me.role==="admin")shell();else{if(me){say("er","This account is not an administrator.");await api("/auth/logout",{method:"POST"})}loginView(false)}}
+boot();
+</script></body></html>
